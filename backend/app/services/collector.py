@@ -44,6 +44,8 @@ class CollectorService:
         entry["pending"] = True
         entry["abnormal"] = False
         rows.append(entry)
+        # 采集任务登记影响目标引擎解析口径，推进配置版本。
+        store.bump_version(MODULE)
         return entry, []
 
     def run_action(self, entry_id: int, action: str) -> tuple[dict[str, Any] | None, str]:
@@ -58,4 +60,6 @@ class CollectorService:
         entry["status"] = target
         entry["pending"] = target != STATUS_ORDER[-1]
         entry["abnormal"] = action in NEGATIVE_ACTIONS
+        # 暂停/归档可能让任务进入已停用/已完成，直接影响候选排除口径，推进版本。
+        store.bump_version(MODULE)
         return entry, f"采集任务已{action}"

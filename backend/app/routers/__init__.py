@@ -17,6 +17,7 @@ from app.routers import captcha as router_captcha
 from app.routers import proxy as router_proxy
 from app.routers import session as router_session
 from app.routers import router as router_router
+from app.routers import locator as router_locator
 from app.routers import validate as router_validate
 from app.routers import dedup as router_dedup
 from app.routers import format as router_format
@@ -25,4 +26,4 @@ from app.routers import storage as router_storage
 from app.routers import monitor as router_monitor
 from app.routers import scheduler as router_scheduler
 
-ROUTERS = [router_collector, router_crawlrule, router_parser, router_increment, router_ratelimit, router_retry, router_rpaflow, router_captcha, router_proxy, router_session, router_router, router_validate, router_dedup, router_format, router_pipeline, router_storage, router_monitor, router_scheduler]
+ROUTERS = [router_collector, router_crawlrule, router_parser, router_increment, router_ratelimit, router_retry, router_rpaflow, router_captcha, router_proxy, router_session, router_router, router_locator, router_validate, router_dedup, router_format, router_pipeline, router_storage, router_monitor, router_scheduler]

@@ -44,6 +44,8 @@ class RouterService:
         entry["pending"] = True
         entry["abnormal"] = False
         rows.append(entry)
+        # 登记新规则属于配置变更，推进版本，让进行中的旧检索能识别到 stale。
+        store.bump_version(MODULE)
         return entry, []
 
     def run_action(self, entry_id: int, action: str) -> tuple[dict[str, Any] | None, str]:
@@ -58,4 +60,6 @@ class RouterService:
         entry["status"] = target
         entry["pending"] = target != STATUS_ORDER[-1]
         entry["abnormal"] = action in NEGATIVE_ACTIONS
+        # 启用/停用直接改变候选集合口径，必须推进版本号。
+        store.bump_version(MODULE)
         return entry, f"分发规则已{action}"

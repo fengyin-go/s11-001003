@@ -11,6 +11,11 @@
       </div>
     </header>
 
+    <div v-if="highlightTaskId" class="locator-banner ok">
+      <span>已从链路分发候选定位到采集任务 id={{ highlightTaskId }}，对应行已高亮；可在此直接查看或操作真实采集目标。</span>
+      <button class="btn ghost" type="button" @click="clearHighlight">取消高亮</button>
+    </div>
+
     <div class="stat-row">
       <article v-for="item in stats" :key="item.label" class="stat-card">
         <span class="stat-label">{{ item.label }}</span>
@@ -35,7 +40,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="row in rows" :key="String(row.id)">
+        <tr v-for="row in rows" :key="String(row.id)" :class="{ 'highlight-row': String(row.id) === String(highlightTaskId) }">
           <td v-for="column in columns" :key="column">{{ row[column] ?? '—' }}</td>
           <td class="row-actions">
             <button
@@ -64,6 +69,7 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 import { request } from '@/api/client'
 
@@ -75,11 +81,21 @@ const actions = ["提交启动", "暂停采集", "恢复采集", "归档任务"]
 const statuses = ["草稿", "待启动", "运行中", "已完成", "已停用"]
 const stats = [{"label": "采集任务总数", "value": 0}, {"label": "运行中任务", "value": 0}, {"label": "已完成任务", "value": 0}]
 
+const route = useRoute()
+const router = useRouter()
+// 链路分发候选跳转时携带 taskId，用于高亮真实采集目标。
+const highlightTaskId = ref<string | null>(typeof route.query.taskId === 'string' ? route.query.taskId : null)
+
 const rows = ref<Row[]>([])
 const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
 const filterFields = columns.slice(0, 3)
+
+function clearHighlight() {
+  highlightTaskId.value = null
+  void router.replace({ path: route.path, query: {} })
+}
 
 function resetFilters() {
   filters.value = {}

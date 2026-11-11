@@ -75,5 +75,34 @@ npm run dev
 - 列表接口统一返回 `{ items, total, page, size }`，动作接口统一返回 `{ ok, message }`。
 - 状态流转只允许在 `app/services` 里改，路由层不做业务判断。
 
+## 链路分发候选定位
+
+链路分发页（`/router`）内置「候选定位」面板：值班人员输入来源 URL，服务端基于
+`来源URL模式、目标引擎、优先级权重、分发比例` 做确定性检索，返回可解释的候选集合，
+并可一键跳到采集引擎中的真实采集任务。
+
+检索口径（详见 `backend/app/services/locator.py` 与 `GET /api/router/locator/semantics`）：
+
+- **匹配**：精确匹配或 fnmatch 通配（`* ? []`），多备选模式用逗号/分号分隔；仅「已启用」规则参与。
+- **稳定裁决**：优先级权重降序 → 分发比例降序 → 规则 id 升序，同权重冲突结果可复现。
+- **排除**：目标任务为「已停用/已完成」、目标引擎无法解析的候选逐条记录原因；
+  同一采集任务被多条规则命中时只保留排名最靠前的一条（其余计入附加命中）。
+- **快照与版本**：每次检索生成不可变快照并记录 `router/collector` 配置版本；
+  翻页与断点续读始终绑定原版本，检索期间配置变更只标记 `stale`，重新检索才使用新版本；
+  会话过期返回 `410`，要求重开检索而非悄悄切换集合。
+- **分页**：候选全局连续编号，跨页无重复、无漏项。
+- **基准对照**：`POST /api/router/locator/benchmark` 合成大量候选，证明索引检索与
+  全量扫描结果（顺序与明细）完全一致，并校验跨页连续、无重复漏项与同权重稳定裁决。
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| POST | `/api/router/locator/searches` | 发起检索，创建版本化快照，返回首页候选 |
+| GET | `/api/router/locator/searches/{id}` | 检索会话状态与版本是否过期 |
+| GET | `/api/router/locator/searches/{id}/pages` | 绑定原快照翻页/断点续读 |
+| POST | `/api/router/locator/benchmark` | 大量候选下索引与全量扫描对照基准 |
+| GET | `/api/router/locator/semantics` | 匹配、裁决、排除、快照口径说明 |
+
+后端仅用标准库的冒烟脚本：`python3 -I backend/scripts/locator_smoke.py`。
+
 领域：数据工程
 子方向：数据采集、爬虫与RPA
